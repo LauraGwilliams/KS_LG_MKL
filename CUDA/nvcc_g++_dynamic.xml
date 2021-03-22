@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright 2015-2016 The MathWorks, Inc. -->
+<config
+    Name="nvcc-dp"
+    ShortName="nvcc-dp"
+    HostCompiler="g++"
+    Manufacturer="NVIDIA"
+    Version="7.5"
+    Language="CUDA"
+    Priority="A"
+    Location="$NVCC" >
+    <Details
+        CompilerExecutable="$CXX"
+        CompilerDefines="$DEFINES"
+        CompilerFlags="$CXXFLAGS"
+        OptimizationFlags="$CXXOPTIMFLAGS"
+        DebugFlags="$CXXDEBUGFLAGS"
+        IncludeFlags="$INCLUDE"
+        LinkerLibraries="$LINKLIBS"
+        LinkerOptimizationFlags="$LDOPTIMFLAGS"
+        LinkerDebugFlags="$LDDEBUGFLAGS"
+
+        CompilerDefineFormatter="-D%s"
+        LinkerLibrarySwitchFormatter="-l%s"
+        LinkerPathFormatter="-L%s"
+    />
+    <vars
+          CMDLINE1="$CXX -c -dc $DEFINES $INCLUDE $NVCCFLAGS $CXXFLAGS $OPTIM $SRC -o $OBJ"
+          CMDLINE2="$CXX -dlink $NVCCFLAGS $CXXFLAGS $OPTIM $OBJS -lcudadevrt -o $DEVOBJ"
+          CMDLINE3="$LDXX $LDFLAGS $LDTYPE $LINKOPTIM $LINKEXPORTVER $DEVOBJ $OBJS $CXXLIBS $LINKLIBS -o $EXE"
+          CMDLINE4="rm -f $OBJ"
+          CMDLINE5="rm -f $DEVOBJ"
+          
+          CXX="$NVCC"
+          DEFINES="--compiler-options=-D_GNU_SOURCE,$MATLABMEX"
+          MATLABMEX="-DMATLAB_MEX_FILE"
+          NVCCFLAGS="-gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=&#92;&quot;sm_50,compute_50&#92;&quot; -std=c++11 $NVCC_FLAGS"
+          CXXFLAGS="--compiler-options=-ansi,-fexceptions,-fPIC,-fno-omit-frame-pointer,-pthread"
+          INCLUDE="-I&quot;$MATLABROOT/extern/include&quot; -I&quot;$MATLABROOT/simulink/include&quot; -I&quot;$MATLABROOT/toolbox/distcomp/gpu/extern/include/&quot;" 
+          CXXOPTIMFLAGS="-O -DNDEBUG"
+          CXXDEBUGFLAGS="-g"
+          
+          LDXX="$GCC"
+          LDFLAGS="-pthread -Wl,--no-undefined "
+          LDTYPE="-shared"
+          LINKEXPORT="-Wl,--version-script,&quot;$MATLABROOT/extern/lib/$ARCH/mexFunction.map&quot;"
+          LINKEXPORTVER="-Wl,--version-script,&quot;$MATLABROOT/extern/lib/$ARCH/c_exportsmexfileversion.map&quot;"
+          LINKLIBS="-Wl,-rpath-link,$MATLABROOT/bin/$ARCH -L&quot;$MATLABROOT/bin/$ARCH&quot; -lmx -lmex -lmat -lm -lstdc++ -lmwgpu $MATLABROOT/bin/$ARCH/libcudart.so.7.5 $MATLABROOT/bin/$ARCH/libcudadevrt.a"
+          LDOPTIMFLAGS="-O"
+          LDDEBUGFLAGS="-g"
+          
+          OBJEXT=".o"
+          LDEXT=".mexa64"
+          
+          SETENV="CXX=&quot;$CXX&quot;
+CXXFLAGS=&quot;$CXXFLAGS $DEFINES&quot;
+CXXOPTIMFLAGS=&quot;$CXXOPTIMFLAGS&quot;
+CXXDEBUGFLAGS=&quot;$CXXDEBUGFLAGS&quot;
+LDXX=&quot;$LDXX&quot;
+LDFLAGS=&quot;$LDFLAGS $LDTYPE $LINKLIBS $LINKEXPORT&quot;
+LDDEBUGFLAGS=&quot;$LDDEBUGFLAGS&quot;">
+
+    </vars>
+    <client>
+    </client>
+    <locationFinder>
+        <NVCC diagnostic="Version 7.5 of the CUDA toolkit could not be found. If installed, set MW_NVCC_PATH environment variable to location of nvcc compiler." >
+            <and>
+                <or>
+                    <and> <!-- Search for nvcc in standard locations, favoring user variable MW_NVCC_PATH, but reject if it isn't the supported version -->
+                        <or>
+                            <and>
+                                <envVarExists name="MW_NVCC_PATH" />
+                                <fileExists name="$$/nvcc" />
+                            </and>
+                            <and>
+                                <envVarExists name="CUDA_BIN_PATH" />
+                                <fileExists name="$$/nvcc" />
+                            </and>
+                            <and>
+                                <envVarExists name="CUDA_PATH" />
+                                <fileExists name="$$/bin/nvcc" />
+                            </and>
+                            <cmdReturns name="which nvcc" />
+                            <fileExists name="/usr/local/cuda/bin/nvcc" />
+                        </or>
+                        <cmdReturns name="$$/nvcc --version | egrep -E 'release 7.5' > /dev/null && echo $$/nvcc" />
+                    </and>
+                    <fileExists name="/usr/local/cuda-7.5/bin/nvcc" /> <!-- Search the default install location -->
+                </or>
+                <cmdReturns name="$$/nvcc --version | egrep -E 'release 7.5' > /dev/null && echo $$/nvcc" />
+            </and>
+        </NVCC>
+
+        <GCC>
+            <cmdReturns name="which g++" />
+        </GCC>
+        <CPPLIB_DIR>
+            <cmdReturns name="g++ -print-file-name=libstdc++.so"
+                        diagnostic="GCC appears to be installed, but supporting C++ libraries were not found.  You must first install the gcc-c++ package, or similiar, to complete this action."/>
+        </CPPLIB_DIR>
+        <DEVOBJ>
+            <cmdReturns name="mktemp --tmpdir mex_XXXXXXXXXX_device.o" />
+        </DEVOBJ>
+    </locationFinder>
+</config>

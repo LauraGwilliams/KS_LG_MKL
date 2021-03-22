@@ -223,7 +223,11 @@ st3 = st3(1:ntot, :);
 fW = fW(:, 1:ntot);
 fWpc = fWpc(:,:, 1:ntot);
 
-rez.dWU = dWU1 ./ reshape(nsp, [1,1,Nfilt]);
+%rez.dWU = dWU1 ./ reshape(nsp, [1,1,Nfilt]);
+% edit to solve nan in template issue. 10th March 2021.
+valid = nsp > 0;
+rez.dWU(:, :, valid) = dWU1(:, :, valid) ./ reshape(nsp(valid), [1,1,sum(valid)]);
+
 rez.nsp = nsp;
 
 %%
